@@ -7,15 +7,15 @@ int main(int argc, char* argv[])
 {
 	//Ef enginn parameter kemur inn á að skrifast út núverandi mappa VIRKAR EKKI!
 	DIR *dp;
-	struct dirent *directoryEntry;
+        struct dirent *directoryEntry;
 	if(argc == 1){
 		puts("argument missing");
 		dp = opendir(".");
 		if(dp != NULL){
-			while(directoryEntry = readdir(dp));
-				printf("%s\n",directoryEntry->d_name);
-		closedir(dp);
+			while((directoryEntry = readdir(dp)) != NULL);
+				printf("%s\n", directoryEntry->d_name);
 		}
+		closedir(dp);	
 	}
 	else{	//Error handling
 		int fd = open(argv[1], O_RDONLY);
@@ -35,15 +35,12 @@ int main(int argc, char* argv[])
 			file = fopen(argv[1], "r");
 			if(file){
 				while((c = getc(file)) != EOF && counter <= 1024){
-					//putchar(c);
-					printf(c);
+					putchar(c);
 					counter++;
 				}
 				fclose(file);
 			}
 			//Directory open
-			DIR *dp;
-			struct dirent *directoryEntry;
 			dp = opendir(argv[1]);
 			if(dp != NULL){
 				while(directoryEntry = readdir(dp))
