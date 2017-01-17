@@ -5,6 +5,7 @@
 
 int main(int argc, char* argv[])
 {
+	//Ef enginn parameter kemur inn á að skrifast út núverandi mappa VIRKAR EKKI!
 	DIR *dp;
 	struct dirent *directoryEntry;
 	if(argc == 1){
@@ -16,20 +17,17 @@ int main(int argc, char* argv[])
 		closedir(dp);
 		}
 	}
-	else{
+	else{	//Error handling
 		int fd = open(argv[1], O_RDONLY);
 		if(fd == -1){
 			int errnr = errno;
 			printf("errno: %4d \n", errnr);
-			if(errnr == 20){
-				puts("not a directory");
-				fd = open("directorylisting.c", O_RDONLY); 
-			}
-			else if(errnr == 2){
+			if(errnr == 2){
 				puts("No such file or directory");
 			}
 		}
-		else{//File open
+		else{
+			//File open - Virkar ekki að skrifa út fyrstu 1024 byteinn.
 			int  c;
 			int counter = 0;
 			FILE *file;
@@ -37,12 +35,13 @@ int main(int argc, char* argv[])
 			file = fopen(argv[1], "r");
 			if(file){
 				while((c = getc(file)) != EOF && counter <= 1024){
-					putchar(c);
+					//putchar(c);
+					printf(c);
 					counter++;
 				}
 				fclose(file);
 			}
-			
+			//Directory open
 			DIR *dp;
 			struct dirent *directoryEntry;
 			dp = opendir(argv[1]);
