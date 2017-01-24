@@ -38,15 +38,18 @@ int main(int argc, char* argv[])
 					putchar(c);
 					counter++;
 				}
-				fclose(file);
 			}
+			fclose(file);
+			puts("File Closed");
 			//Directory open
+			puts("Folder open");
 			dp = opendir(argv[1]);
 			if(dp != NULL){
 				while(directoryEntry = readdir(dp))
 					printf("%s\n", directoryEntry->d_name);
-			closedir(dp);
 			} 
+			closedir(dp);
+			puts("Folder closed");
 		} 
 	return 0;
 	}
