@@ -21,7 +21,6 @@ public class ThreadAssignment01Main {
         ExecutorService threadPool = Executors.newFixedThreadPool(POOL_SIZE);
         
         for(int i = 0; i < NUMBER_OF_PROBLEMS; i++){
-        	final int number = i+1;
         	threadPool.submit(makeNewRunnable(i));
         }
         	//threads[i] = new Thread(new Runnable()  {
