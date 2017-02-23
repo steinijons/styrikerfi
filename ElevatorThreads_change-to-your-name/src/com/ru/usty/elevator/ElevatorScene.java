@@ -13,11 +13,19 @@ import java.util.concurrent.Semaphore;
 
 public class ElevatorScene {
 	
+	//Allar semaphoreur
 	public static Semaphore semaphore1;
 	public static Semaphore personCountMutex;
 	public static Semaphore elevatorWaitMutex;
+	public static Semaphore elevatorGoOut;
+	public static Semaphore PersonInElevatorCount;
+	
 	public static ElevatorScene scene;
+	
+	
 	public static boolean elevatorMayDie;
+	
+	public static int personInElevator;
 	
 
 	//TO SPEED THINGS UP WHEN TESTING,
@@ -40,14 +48,16 @@ public class ElevatorScene {
 	//Necessary to add your code in this one
 	public void restartScene(int numberOfFloors, int numberOfElevators) {
 		
-		elevatorMayDie = true;
+		elevatorMayDie = true; //Byrja á að drepa allar lyftur
 		
 		if(elevatorThread != null)
 		{
 			if(elevatorThread.isAlive())
 			{
 				try {
+					
 					elevatorThread.join();
+					
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -56,11 +66,13 @@ public class ElevatorScene {
 		}
 		
 		elevatorMayDie = false;
-		
 		scene = this;
+		
 		semaphore1 = new Semaphore(0);
 		personCountMutex = new Semaphore(1);
 		elevatorWaitMutex = new Semaphore(1);
+		elevatorGoOut = new Semaphore(0);
+		PersonInElevatorCount = new Semaphore(1);
 	
 		
 		elevatorThread = new Thread(new Runnable() {
@@ -73,7 +85,7 @@ public class ElevatorScene {
 						return;
 					}
 				
-					for(int i = 0; i < 16; i++){
+					for(int i = 0; i < numberOfFloors; i++){
 						ElevatorScene.semaphore1.release(); //signal
 					
 					}
@@ -141,17 +153,20 @@ public class ElevatorScene {
 
 		//dumb code, replace it!
 		return 1;
+		//return getCurrentFloorForElevator(elevator);
 	}
 
 	//Base function: definition must not change, but add your code
 	public int getNumberOfPeopleInElevator(int elevator) {
 		
 		//dumb code, replace it!
-		switch(elevator) {
+		/*switch(elevator) {
 		case 1: return 1;
 		case 2: return 4;
 		default: return 3;
-		}
+		}*/
+		
+		return personInElevator;
 	}
 
 	//Base function: definition must not change, but add your code
@@ -160,12 +175,44 @@ public class ElevatorScene {
 		return personCount.get(floor);
 	}
 	
+	public void decrementNumberOfPeopleInElevator(int elevator) {
+		try {
+			
+			personCountMutex.acquire();
+				personInElevator -= 1;
+				System.out.println("Einum færri í lyftu");
+			personCountMutex.release();
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void incrementNumberOfPeopleInElevator(int elevator) {
+		
+		try {
+			
+			personCountMutex.acquire();
+				personInElevator += 1;
+				System.out.println("Einum fleirri í lyftu");
+			personCountMutex.release();
+			
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	public void decrementNumberOfPeopleWaitingAtFloor(int floor) {
 		try {
+			
 			personCountMutex.acquire();
-			personCount.set(floor, (personCount.get(floor) - 1));
-			System.out.println("Einum færri í lyftu");
-			personCountMutex.release();
+				personCount.set(floor, (personCount.get(floor) - 1));
+			personCountMutex.release();	
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -178,9 +225,10 @@ public class ElevatorScene {
 		try {
 			
 			personCountMutex.acquire();
-			personCount.set(floor, personCount.get(floor) + 1);
+				personCount.set(floor, personCount.get(floor) + 1);
 			personCountMutex.release();
-			System.out.println("Einum fleirri í lyftu");
+			
+			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -230,7 +278,7 @@ public class ElevatorScene {
 		try {
 			
 			exitedCountMutex.acquire();
-			exitedCount.set(floor, (exitedCount.get(floor) + 1));
+				exitedCount.set(floor, (exitedCount.get(floor) + 1));
 			exitedCountMutex.release();
 
 		} catch (InterruptedException e) {
