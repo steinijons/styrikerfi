@@ -16,10 +16,12 @@ public class ElevatorScene {
 	//Allar semaphoreur
 	public static Semaphore semaphore1;
 	public static Semaphore personCountMutex;
-	public static Semaphore elevatorWaitMutex;
-	public static Semaphore elevatorGoOut;
+
 	public static Semaphore PersonInElevatorCount;
 	
+	public static Semaphore elevatorWaitMutex;
+	public static Semaphore elevatorGoOut;
+	public static Semaphore peopleInElevevatorMutext;
 	public static ElevatorScene scene;
 	
 	
@@ -35,13 +37,15 @@ public class ElevatorScene {
 	private int numberOfFloors;
 	private int numberOfElevators;
 	
-	private Thread elevatorThread = null;
+	private Thread elevatorThread;
 
 	ArrayList<Integer> personCount; //use if you want but
 									//throw away and
 									//implement differently
 									//if it suits you
 	ArrayList<Integer> exitedCount = null;
+	ArrayList<Integer> elevatorNumber;
+	
 	public static Semaphore exitedCountMutex;
 
 	//Base function: definition must not change
@@ -66,16 +70,21 @@ public class ElevatorScene {
 		}
 		
 		elevatorMayDie = false;
+		
 		scene = this;
 		
 		semaphore1 = new Semaphore(0);
-		personCountMutex = new Semaphore(1);
-		elevatorWaitMutex = new Semaphore(1);
 		elevatorGoOut = new Semaphore(0);
-		PersonInElevatorCount = new Semaphore(1);
-	
 		
-		elevatorThread = new Thread(new Runnable() {
+		personCountMutex = new Semaphore(1);
+		elevatorWaitMutex = new Semaphore(1);	
+		peopleInElevevatorMutext = new Semaphore(1);
+		
+		elevatorThread = new Thread(new Elevator());
+		elevatorThread.start();
+		
+		/*elevatorThread = new Thread(new Runnable() {
+			
 			@Override
 			public void run() {
 				while(true)
@@ -87,30 +96,21 @@ public class ElevatorScene {
 				
 					for(int i = 0; i < numberOfFloors; i++){
 						ElevatorScene.semaphore1.release(); //signal
-					
 					}
 				}
 			}
 			
 		});
-		elevatorThread.start();
-		/**
-		 * Important to add code here to make new
-		 * threads that run your elevator-runnables
-		 * 
-		 * Also add any other code that initializes
-		 * your system for a new run
-		 * 
-		 * If you can, tell any currently running
-		 * elevator threads to stop
-		 */
+		elevatorThread.start();*/
 
 		this.numberOfFloors = numberOfFloors;
 		this.numberOfElevators = numberOfElevators;
 
 		personCount = new ArrayList<Integer>();
+		elevatorNumber = new ArrayList<Integer>();
 		for(int i = 0; i < numberOfFloors; i++) {
 			this.personCount.add(0);
+			this.elevatorNumber.add(i);
 		}
 
 		if(exitedCount == null) {
@@ -129,20 +129,8 @@ public class ElevatorScene {
 	//Necessary to add your code in this one
 	public Thread addPerson(int sourceFloor, int destinationFloor) {
 
-		
-		//Person person = new Person(sourceFloor, destinationFloor);
 		Thread thread = new Thread(new Person(sourceFloor, destinationFloor));
 		thread.start();
-		/**
-		 * Important to add code here to make a
-		 * new thread that runs your person-runnable
-		 * 
-		 * Also return the Thread object for your person
-		 * so that it can be reaped in the testSuite
-		 * (you don't have to join() yourself)
-		 */
-
-		//dumb code, replace it!
 		
 		incrementNumberOfPeopleWaitingAtFloor(sourceFloor);
 		return thread;  //this means that the testSuite will not wait for the threads to finish
@@ -152,7 +140,8 @@ public class ElevatorScene {
 	public int getCurrentFloorForElevator(int elevator) {
 
 		//dumb code, replace it!
-		return 1;
+		//return ElevatorNumber.get(elevator);
+		return elevatorNumber.get(elevator);
 		//return getCurrentFloorForElevator(elevator);
 	}
 
@@ -178,33 +167,30 @@ public class ElevatorScene {
 	public void decrementNumberOfPeopleInElevator(int elevator) {
 		try {
 			
-			personCountMutex.acquire();
+			peopleInElevevatorMutext.acquire();
 				personInElevator -= 1;
-				System.out.println("Einum færri í lyftu");
-			personCountMutex.release();
+				System.out.println("decrementNumberOfPeopleInElevator in elevator: " + elevator + " to: " + getNumberOfPeopleInElevator(elevator));
+			peopleInElevevatorMutext.release();
 			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-		
+		}	
 	}
 	
 	public void incrementNumberOfPeopleInElevator(int elevator) {
 		
 		try {
 			
-			personCountMutex.acquire();
+			peopleInElevevatorMutext.acquire();
 				personInElevator += 1;
-				System.out.println("Einum fleirri í lyftu");
-			personCountMutex.release();
+				System.out.println("incrementNumberOfPeopleInElevator in elevator: " + elevator + " to: " + getNumberOfPeopleInElevator(elevator));
+			peopleInElevevatorMutext.release();
 			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
-		
 	}
 	
 	public void decrementNumberOfPeopleWaitingAtFloor(int floor) {
@@ -212,6 +198,7 @@ public class ElevatorScene {
 			
 			personCountMutex.acquire();
 				personCount.set(floor, (personCount.get(floor) - 1));
+				System.out.println("decrementNumberOfPeopleWaitingAtFloor at floor: " + floor + " total of: " + getNumberOfPeopleWaitingAtFloor(floor));
 			personCountMutex.release();	
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -226,6 +213,7 @@ public class ElevatorScene {
 			
 			personCountMutex.acquire();
 				personCount.set(floor, personCount.get(floor) + 1);
+				System.out.println("incrementNumberOfPeopleWaitingAtFloor at floor: " + floor + " total of: " + getNumberOfPeopleWaitingAtFloor(floor));
 			personCountMutex.release();
 			
 			
