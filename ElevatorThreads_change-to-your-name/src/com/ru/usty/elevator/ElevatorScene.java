@@ -19,7 +19,7 @@ public class ElevatorScene {
 
 	public static Semaphore PersonInElevatorCount;
 	
-	public static Semaphore elevatorWaitMutex;
+	//public static Semaphore elevatorWaitMutex;
 	public static Semaphore elevatorMoveMutex;
 	public static Semaphore peopleInElevevatorMutext;
 	public static ElevatorScene scene;
@@ -32,11 +32,11 @@ public class ElevatorScene {
 
 	//TO SPEED THINGS UP WHEN TESTING,
 	//feel free to change this.  It will be changed during grading
-	public static final int VISUALIZATION_WAIT_TIME = 500;  //milliseconds
+	public static final int VISUALIZATION_WAIT_TIME = 50;  //milliseconds
 
 	private int numberOfFloors;
 	private int numberOfElevators;
-	public static int elevatorFloor = 90;
+	public static int elevatorFloor = 10;
 	
 	private Thread elevatorThread;
 	
@@ -48,6 +48,7 @@ public class ElevatorScene {
 
 	ArrayList<Semaphore> inSemaphore;
 	ArrayList<Semaphore> outSemaphore;
+	ArrayList<Semaphore> elevatorWaitMutex;
 	
 	ArrayList<Integer> personCount; //use if you want but
 									//throw away and
@@ -86,7 +87,7 @@ public class ElevatorScene {
 		semaphore1 = new Semaphore(0);
 		
 		personCountMutex = new Semaphore(1);
-		elevatorWaitMutex = new Semaphore(1);	
+		//elevatorWaitMutex = new Semaphore(1);	
 		elevatorMoveMutex = new Semaphore(1);
 		peopleInElevevatorMutext = new Semaphore(1);
 		
@@ -96,20 +97,7 @@ public class ElevatorScene {
 
 		this.numberOfFloors = numberOfFloors;
 		this.numberOfElevators = numberOfElevators;
-		
-		/*semaphoresForFloorsOut = new ArrayList<Semaphore>();
-		for(int i = 0; i < numberOfFloors; i++) {
-			this.semaphoresForFloorsOut.add(new Semaphore(0));
-		}
-		semaphoresForFloors = new ArrayList<Semaphore>();
-		for(int i = 0; i < numberOfFloors; i++) {
-			this.semaphoresForFloors.add(new Semaphore(0));
-		}
-		semaphoresWait = new ArrayList<Semaphore>();
-		for(int i = 0; i < numberOfFloors; i++) {
-			this.semaphoresWait.add(new Semaphore(1));
-		}*/
-		
+
 		
 		inSemaphore = new ArrayList<Semaphore>();
 		for(int i = 0; i < numberOfFloors; i++)
@@ -123,6 +111,11 @@ public class ElevatorScene {
 			this.outSemaphore.add(new Semaphore(0));
 		}
 		
+		elevatorWaitMutex = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++)
+		{
+			this.elevatorWaitMutex.add(new Semaphore(1));
+		}
 		
 		personCount = new ArrayList<Integer>();
 		elevatorNumber = new ArrayList<Integer>();
@@ -189,7 +182,6 @@ public class ElevatorScene {
 			
 			peopleInElevevatorMutext.acquire();
 				personInElevator -= 1;
-				System.out.println("decrementNumberOfPeopleInElevator in elevator: " + elevator + " to: " + getNumberOfPeopleInElevator(elevator));
 			peopleInElevevatorMutext.release();
 			
 		} catch (InterruptedException e) {
@@ -204,7 +196,6 @@ public class ElevatorScene {
 			
 			peopleInElevevatorMutext.acquire();
 				personInElevator += 1;
-				System.out.println("incrementNumberOfPeopleInElevator in elevator: " + elevator + " to: " + getNumberOfPeopleInElevator(elevator));
 			peopleInElevevatorMutext.release();
 			
 		} catch (InterruptedException e) {
@@ -218,7 +209,6 @@ public class ElevatorScene {
 			
 			personCountMutex.acquire();
 				personCount.set(floor, (personCount.get(floor) - 1));
-				System.out.println("decrementNumberOfPeopleWaitingAtFloor at floor: " + floor + " total of: " + getNumberOfPeopleWaitingAtFloor(floor));
 			personCountMutex.release();	
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -233,7 +223,6 @@ public class ElevatorScene {
 			
 			personCountMutex.acquire();
 				personCount.set(floor, personCount.get(floor) + 1);
-				System.out.println("incrementNumberOfPeopleWaitingAtFloor at floor: " + floor + " total of: " + getNumberOfPeopleWaitingAtFloor(floor));
 			personCountMutex.release();
 			
 			

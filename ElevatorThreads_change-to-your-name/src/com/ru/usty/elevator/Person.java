@@ -14,14 +14,12 @@ public class Person implements Runnable {
 		
 		try {
 			System.out.println("Peróna: " + " til: " + sourceFloor + " DestinationFloor: " + destinationFloor);
-			//ElevatorScene.semaphore1.acquire();
+			ElevatorScene.scene.elevatorWaitMutex.get(sourceFloor).acquire();
 			ElevatorScene.scene.inSemaphore.get(sourceFloor).acquire();
-			System.out.println("Manneskja fer inní lyftu");
+			ElevatorScene.scene.elevatorWaitMutex.get(sourceFloor).release();
 			
 			ElevatorScene.scene.incrementNumberOfPeopleInElevator(1);
 			ElevatorScene.scene.decrementNumberOfPeopleWaitingAtFloor(sourceFloor);
-			System.out.println("Manneskja kominn í lyftu");
-			System.out.println("number of people: " + ElevatorScene.scene.personCount + "fyrir elevatorGoOut semaphore");
 			
 			ElevatorScene.scene.outSemaphore.get(destinationFloor).acquire();
 			ElevatorScene.scene.decrementNumberOfPeopleInElevator(1);
