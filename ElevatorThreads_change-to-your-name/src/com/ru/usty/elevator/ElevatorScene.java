@@ -20,7 +20,7 @@ public class ElevatorScene {
 	public static Semaphore PersonInElevatorCount;
 	
 	public static Semaphore elevatorWaitMutex;
-	public static Semaphore elevatorGoOut;
+	public static Semaphore elevatorMoveMutex;
 	public static Semaphore peopleInElevevatorMutext;
 	public static ElevatorScene scene;
 	
@@ -36,9 +36,19 @@ public class ElevatorScene {
 
 	private int numberOfFloors;
 	private int numberOfElevators;
+	public static int elevatorFloor = 90;
 	
 	private Thread elevatorThread;
+	
+	ArrayList<Integer> personCountGoingOut;
+	
+	/*ArrayList<Semaphore> semaphoresForFloors;
+	ArrayList<Semaphore> semaphoresForFloorsOut;
+	ArrayList<Semaphore> semaphoresWait;*/
 
+	ArrayList<Semaphore> inSemaphore;
+	ArrayList<Semaphore> outSemaphore;
+	
 	ArrayList<Integer> personCount; //use if you want but
 									//throw away and
 									//implement differently
@@ -74,38 +84,46 @@ public class ElevatorScene {
 		scene = this;
 		
 		semaphore1 = new Semaphore(0);
-		elevatorGoOut = new Semaphore(0);
 		
 		personCountMutex = new Semaphore(1);
 		elevatorWaitMutex = new Semaphore(1);	
+		elevatorMoveMutex = new Semaphore(1);
 		peopleInElevevatorMutext = new Semaphore(1);
 		
-		elevatorThread = new Thread(new Elevator());
+		elevatorThread = new Thread(new Elevator(0));
 		elevatorThread.start();
 		
-		/*elevatorThread = new Thread(new Runnable() {
-			
-			@Override
-			public void run() {
-				while(true)
-				{
-					if(elevatorMayDie)
-					{
-						return;
-					}
-				
-					for(int i = 0; i < numberOfFloors; i++){
-						ElevatorScene.semaphore1.release(); //signal
-					}
-				}
-			}
-			
-		});
-		elevatorThread.start();*/
 
 		this.numberOfFloors = numberOfFloors;
 		this.numberOfElevators = numberOfElevators;
-
+		
+		/*semaphoresForFloorsOut = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++) {
+			this.semaphoresForFloorsOut.add(new Semaphore(0));
+		}
+		semaphoresForFloors = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++) {
+			this.semaphoresForFloors.add(new Semaphore(0));
+		}
+		semaphoresWait = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++) {
+			this.semaphoresWait.add(new Semaphore(1));
+		}*/
+		
+		
+		inSemaphore = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++)
+		{
+			this.inSemaphore.add(new Semaphore(0));
+		}
+		
+		outSemaphore = new ArrayList<Semaphore>();
+		for(int i = 0; i < numberOfFloors; i++)
+		{
+			this.outSemaphore.add(new Semaphore(0));
+		}
+		
+		
 		personCount = new ArrayList<Integer>();
 		elevatorNumber = new ArrayList<Integer>();
 		for(int i = 0; i < numberOfFloors; i++) {
@@ -125,6 +143,7 @@ public class ElevatorScene {
 		exitedCountMutex = new Semaphore(1);
 	}
 
+	
 	//Base function: definition must not change
 	//Necessary to add your code in this one
 	public Thread addPerson(int sourceFloor, int destinationFloor) {
@@ -140,11 +159,13 @@ public class ElevatorScene {
 	public int getCurrentFloorForElevator(int elevator) {
 
 		//dumb code, replace it!
-		//return ElevatorNumber.get(elevator);
-		return elevatorNumber.get(elevator);
-		//return getCurrentFloorForElevator(elevator);
+		return elevatorFloor;
 	}
 
+	public void setCurrentFloorForElevator(int elevator){
+		ElevatorScene.elevatorFloor = elevator;
+	}
+	
 	//Base function: definition must not change, but add your code
 	public int getNumberOfPeopleInElevator(int elevator) {
 		
@@ -154,7 +175,6 @@ public class ElevatorScene {
 		case 2: return 4;
 		default: return 3;
 		}*/
-		
 		return personInElevator;
 	}
 
@@ -224,6 +244,33 @@ public class ElevatorScene {
 		
 	}
 
+	
+	public void increamentFloor(int floor) {
+		try {
+			elevatorMoveMutex.acquire();
+				elevatorNumber.set(floor,elevatorNumber.get(floor) - 1);
+			elevatorMoveMutex.release();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+		
+	}
+	
+	public void decreamentFloor(int floor){
+		try {
+			elevatorMoveMutex.acquire();
+				System.out.println(floor);
+				elevatorNumber.set(floor, (elevatorNumber.get(floor) - 1));
+			elevatorMoveMutex.release();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	
+	}
+	
 	//Base function: definition must not change, but add your code if needed
 	public int getNumberOfFloors() {
 		return numberOfFloors;
@@ -285,6 +332,4 @@ public class ElevatorScene {
 			return 0;
 		}
 	}
-
-
 }
