@@ -16,6 +16,7 @@ public class ElevatorScene {
 	//Allar semaphoreur
 	public static Semaphore semaphore1;
 	public static Semaphore personCountMutex;
+	public static Semaphore personGoOutMutex;
 
 	public static Semaphore PersonInElevatorCount;
 	
@@ -32,7 +33,7 @@ public class ElevatorScene {
 
 	//TO SPEED THINGS UP WHEN TESTING,
 	//feel free to change this.  It will be changed during grading
-	public static final int VISUALIZATION_WAIT_TIME = 50;  //milliseconds
+	public static final int VISUALIZATION_WAIT_TIME = 100;  //milliseconds
 
 	private int numberOfFloors;
 	private int numberOfElevators;
@@ -85,7 +86,7 @@ public class ElevatorScene {
 		scene = this;
 		
 		semaphore1 = new Semaphore(0);
-		
+		personGoOutMutex = new Semaphore(1);
 		personCountMutex = new Semaphore(1);
 		//elevatorWaitMutex = new Semaphore(1);	
 		elevatorMoveMutex = new Semaphore(1);
@@ -119,9 +120,11 @@ public class ElevatorScene {
 		
 		personCount = new ArrayList<Integer>();
 		elevatorNumber = new ArrayList<Integer>();
+		personCountGoingOut = new ArrayList<Integer>();
 		for(int i = 0; i < numberOfFloors; i++) {
 			this.personCount.add(0);
 			this.elevatorNumber.add(i);
+			this.personCountGoingOut.add(0);
 		}
 
 		if(exitedCount == null) {
@@ -147,6 +150,7 @@ public class ElevatorScene {
 		incrementNumberOfPeopleWaitingAtFloor(sourceFloor);
 		return thread;  //this means that the testSuite will not wait for the threads to finish
 	}
+
 
 	//Base function: definition must not change, but add your code
 	public int getCurrentFloorForElevator(int elevator) {
@@ -175,6 +179,31 @@ public class ElevatorScene {
 	public int getNumberOfPeopleWaitingAtFloor(int floor) {
 
 		return personCount.get(floor);
+	}
+	
+	public void incrementNumberOfPeopleGoOutThisFloor(int floor)
+	{
+		try {
+			personGoOutMutex.acquire();
+				personCountGoingOut.set(floor, (personCountGoingOut.get(floor) + 1));
+			personGoOutMutex.release();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	public void decrementNumberOfPeopleGoOutThisFloor(int floor)
+	{
+		try {
+			personGoOutMutex.acquire();
+				personCountGoingOut.set(floor, (personCountGoingOut.get(floor) - 1));
+			personGoOutMutex.release();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void decrementNumberOfPeopleInElevator(int elevator) {
@@ -215,7 +244,7 @@ public class ElevatorScene {
 			e.printStackTrace();
 		}
 		
-	}
+	}	
 	
 	public void incrementNumberOfPeopleWaitingAtFloor(int floor) {
 		
@@ -320,5 +349,11 @@ public class ElevatorScene {
 		else {
 			return 0;
 		}
+	}
+
+
+	public int getNumberOfPeopleGoOutThisFloor(int floor) {
+		
+		return personCountGoingOut.get(floor);
 	}
 }

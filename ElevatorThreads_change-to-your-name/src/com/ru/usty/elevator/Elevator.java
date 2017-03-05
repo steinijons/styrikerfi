@@ -1,9 +1,10 @@
 package com.ru.usty.elevator;
 
 public class Elevator implements Runnable {
-	int numberOfPeople = 0;
+	int numberOfPeople;
 	int currFloor;
 	int elevator;
+	int peopleGoOutThisFloor;
 	
 	public Elevator(int elevator)
 	{
@@ -17,20 +18,18 @@ public class Elevator implements Runnable {
 			for(int i = 0; i < ElevatorScene.scene.getNumberOfFloors(); i++)
 			{
 				ElevatorScene.scene.setCurrentFloorForElevator(i);
-				System.out.println("HÆÐ: " + i);
+				System.out.println("Floor: " + i);
 		
-				//Ath pláss í lyftu
 				numberOfPeople = ElevatorScene.scene.getNumberOfPeopleInElevator(1);
 				for(int j = 0; j < (6 - numberOfPeople); j++)
 				{
-					System.out.println("Persóna ma fara inn");
+					System.out.println("Persona ma " + (j + 1) + " fara inn");
 					ElevatorScene.scene.inSemaphore.get(i).release();
 					sleepNow();
 				}
-				/*//Filla lyftu
-				for(int j = 0; j < (6 - numberOfPeople); j++)
-				{
-					System.out.println("fyllum lyftu með personu " + j);
+
+				/*for(int j = 0; j < (6 - numberOfPeople); j++){
+					System.out.println("fyllum lyftu med personu " + j);
 					try {
 						ElevatorScene.scene.inSemaphore.get(i).acquire();
 					} catch (InterruptedException e) {
@@ -40,7 +39,7 @@ public class Elevator implements Runnable {
 					sleepNow();
 				}*/
 				
-				ElevatorScene.scene.elevatorWaitMutex.get(i).release();
+				//ElevatorScene.scene.elevatorWaitMutex.get(i).release();
 				System.out.println("Lyfta full");
 				
 	
@@ -50,15 +49,17 @@ public class Elevator implements Runnable {
 				{
 					ElevatorScene.scene.setCurrentFloorForElevator(currFloor);
 					
-					for(int j = 0; j < 6; j++)
+					peopleGoOutThisFloor = ElevatorScene.scene.getNumberOfPeopleGoOutThisFloor(currFloor);
+					System.out.println("PEOPLE GOING OUT ON THIS FLOOR: " + peopleGoOutThisFloor);
+					
+					for(int j = 0; j < peopleGoOutThisFloor; j++)
 					{
-						System.out.println("HÆÐ: " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));
-						System.out.println("Persóna: " + j + " fer úr lyftu");				
+						System.out.println("Persona: " + (j + 1) + " fer ur lyftu a hæd " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));				
 						ElevatorScene.scene.outSemaphore.get(currFloor).release();
 			
 						sleepNow();
 					}
-					System.out.println("Allir farnir úr lyftu!!!!");
+					System.out.println("Allir farnir ur lyftu!!!!");
 				}
 				else
 				{
@@ -70,20 +71,22 @@ public class Elevator implements Runnable {
 			for(int i = ElevatorScene.scene.getNumberOfFloors()-1; i > 0 ; i--)
 			{
 				ElevatorScene.scene.setCurrentFloorForElevator(i);
-				System.out.println("HÆÐ: " + i);
+				System.out.println("Haed: " + i);
 		
-				//Ath pláss í lyftu
+				
 				numberOfPeople = ElevatorScene.scene.getNumberOfPeopleInElevator(1);
-				for(int j = 0; j < (6 - numberOfPeople); j++)
+				for(int j = 0; j < 6/*(6 - numberOfPeople)*/; j++)
 				{
-					System.out.println("Persóna ma fara inn");
+					System.out.println("Persona ma fara inn");
 					ElevatorScene.scene.inSemaphore.get(i).release();
 					sleepNow();
 				}
+
+
 				//Filla lyftu
 				/*for(int j = 0; j < (6 - numberOfPeople); j++)
 				{
-					System.out.println("fyllum lyftu með personu " + j);
+					System.out.println("fyllum lyftu meÃ° personu " + j);
 					try {
 						ElevatorScene.scene.inSemaphore.get(i).acquire();
 					} catch (InterruptedException e) {
@@ -92,34 +95,41 @@ public class Elevator implements Runnable {
 					}//tokum semaphorurnar sem ad gefa leyfi fyrir ad fara inni lyftu
 					sleepNow();
 				}*/
-				ElevatorScene.scene.elevatorWaitMutex.get(i).release();
-				currFloor = i + 1;
+				//ElevatorScene.scene.elevatorWaitMutex.get(i).release();
 				
-				if(currFloor < ElevatorScene.scene.getNumberOfFloors())
+				currFloor = i - 1;
+				//peopleGoingOut = ElevatorScene.scene.getNumberOfPeopleGoingOutAtFloor(currFloor);
+				if(currFloor >= 0)
 				{
 					ElevatorScene.scene.setCurrentFloorForElevator(currFloor);
+					System.out.println("FOLK I LYFTU: " + ElevatorScene.scene.getNumberOfPeopleInElevator(1));
 					
-					for(int j = 0; j < 6; j++)
+					peopleGoOutThisFloor = ElevatorScene.scene.getNumberOfPeopleGoOutThisFloor(currFloor);
+					
+					System.out.println("PEOPLE GOING OUT ON THIS FLOOR: " + peopleGoOutThisFloor);
+					
+					for(int j = 0; j < peopleGoOutThisFloor; j++)
 					{
-						System.out.println("HÆÐ: " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));
-						System.out.println("Persóna: " + j + " fer úr lyftu");				
+						System.out.println("Floor: " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));
+						System.out.println("Persona: " + j + " fer ur lyftu");				
 						ElevatorScene.scene.outSemaphore.get(currFloor).release();
 			
 						sleepNow();
 					}
-					System.out.println("Allir farnir úr lyftu!!!!");
+					System.out.println("Allir farnir Ãºr lyftu!!!!");
 				}
 				else
 				{
 					break;
 				}
-			}
+			
 			if(ElevatorScene.scene.getNumberOfPeopleWaitingAtFloor(0) == 0)
 			{
-				System.out.println("KEYRSLA BÚIN!!!!!");
+				System.out.println("KEYRSLA BUIN!!!!!");
 				break;
 				
 			}
+		  }
 		}
 	}
 	
@@ -133,4 +143,4 @@ public class Elevator implements Runnable {
 			}
 		}
 	
-	}
+}
