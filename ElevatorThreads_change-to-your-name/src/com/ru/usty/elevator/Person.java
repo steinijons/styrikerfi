@@ -13,12 +13,14 @@ public class Person implements Runnable {
 	public void run() {
 		
 		try {
-			System.out.println("Persóna: " + " til: " + sourceFloor + " DestinationFloor: " + destinationFloor);
+			
+			
+			//System.out.println("Persóna: " + " til: " + sourceFloor + " DestinationFloor: " + destinationFloor);
 			//ElevatorScene.semaphore1.acquire();
+			int currElevator = findElevator();
 			ElevatorScene.scene.inSemaphore.get(sourceFloor).acquire();
 			//System.out.println("Manneskja fer inní lyftu");
-			
-			ElevatorScene.scene.incrementNumberOfPeopleInElevator(1);
+			ElevatorScene.scene.incrementNumberOfPeopleInElevator(currElevator);
 			ElevatorScene.scene.incrementNumberOfPeopleGoOutThisFloor(destinationFloor);
 			ElevatorScene.scene.decrementNumberOfPeopleWaitingAtFloor(sourceFloor);
 			//System.out.println("Manneskja kominn í lyftu");
@@ -33,12 +35,12 @@ public class Person implements Runnable {
 			//ElevatorScene.scene.decrementNumberOfPeopleWaitingAtFloor(sourceFloor);
 			
 			ElevatorScene.scene.outSemaphore.get(destinationFloor).acquire();
-			ElevatorScene.scene.decrementNumberOfPeopleInElevator(1);
+			ElevatorScene.scene.decrementNumberOfPeopleInElevator(currElevator);
 			ElevatorScene.scene.decrementNumberOfPeopleGoOutThisFloor(destinationFloor);
 			ElevatorScene.scene.personExitsAtFloor(destinationFloor);
 			//ElevatorScene.scene.incrementNumberOfPeopleWaitingAtFloor(destinationFloor);
-
-
+			
+			
 			
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -46,6 +48,17 @@ public class Person implements Runnable {
 		}
 		
 		//System.out.println("Person Thread realeased");
+	}
+	public int findElevator()
+	{
+		for(int i = 0; i < ElevatorScene.scene.getNumberOfElevators(); i++){
+			
+			if(ElevatorScene.scene.getNumberOfPeopleInElevator(i) < 6){
+				System.out.println("Elevator Nr : " + ElevatorScene.scene.elevatorNumber.get(i) + " number of people in elevator: " + ElevatorScene.scene.getNumberOfPeopleInElevator(i));
+				return i;
+			}
+		}
+		return 0;
 	}
 
 }
