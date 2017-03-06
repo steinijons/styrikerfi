@@ -5,6 +5,8 @@ public class Elevator implements Runnable {
 	final int ELEVATORMAX = 6;
 	boolean goingUp;
 	
+	int counter = 0;
+	
 	public Elevator(int elevator)
 	{
 		this.elevator = elevator;
@@ -18,12 +20,12 @@ public class Elevator implements Runnable {
 	public void run() {
 		while(true)
 		{
+			counter++;
 			if(ElevatorScene.elevatorMayDie)
 			{
 				return;
 			}
 			
-			System.out.println("Current floor: " + currFloor);
 			// If we have reached top floor, switch elevator direction to down and to up if we reach bottom floor.
 			if (currFloor == ElevatorScene.scene.getNumberOfFloors() - 1) {
 				goingUp = false;
@@ -34,12 +36,22 @@ public class Elevator implements Runnable {
 			
 			// Let people out of elevator for currFloor (if any)
 			peopleGoOutThisFloor = ElevatorScene.scene.getNumberOfPeopleGoOutThisFloor(currFloor);
-			for(int j = 0; j < peopleGoOutThisFloor; j++) {
-				//System.out.println("Persona: " + (j + 1) + " fer ur lyftu a h�d " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));				
-				
+			for(int j = 0; j < peopleGoOutThisFloor; j++) {		
 				ElevatorScene.scene.outSemaphore.get(currFloor).release();
 				sleepNow();
 			}
+				
+			//kill program if there is no person waiting for the elevator
+			if(counter != 1)
+			{
+				if(checkIfToKillProgram()){
+					if(currFloor == 0){
+						System.out.println("Finished!");
+						break;
+					}
+				}
+			}
+			
 			
 			// Let people waiting on currFloor fill the elevator (if there is room)
 			numberOfPeopleInElevator = ElevatorScene.scene.getNumberOfPeopleInElevator(elevator);
@@ -60,110 +72,23 @@ public class Elevator implements Runnable {
 			}
 			ElevatorScene.scene.setCurrentFloorForElevator(currFloor, elevator);
 			sleepNow();
-			
-			
-			//NÆR EKKI AÐ KLÁRA AÐ TÆMA LYFTU !! ÞARF AÐ LAGA!!!!
-			/*if(ElevatorScene.scene.getNumberOfPeopleWaitingAtFloor(0) == 0)
-			{
-				break;
-			}*/
-			
+						
 		}
 	}
-	
-//			System.out.println("NUMBER OF FLOORS: " + ElevatorScene.scene.getNumberOfFloors());
-//			for(int i = 0; i < ElevatorScene.scene.getNumberOfFloors(); i++)
-//			{
-//				ElevatorScene.scene.setCurrentFloorForElevator(i);
-//				System.out.println("Floor: " + i);
-//		
-//				numberOfPeople = ElevatorScene.scene.getNumberOfPeopleInElevator(1);
-//				for(int j = 0; j < (6 - numberOfPeople); j++)
-//				{
-//					System.out.println("Persona ma " + (j + 1) + " fara inn");
-//					ElevatorScene.scene.inSemaphore.get(i).release();
-//					sleepNow();
-//				}
-//				
-//				//ElevatorScene.scene.elevatorWaitMutex.get(i).release();
-//				System.out.println("Lyfta full");
-//				
-//	
-//				currFloor = i + 1;
-//				
-//				if(currFloor < ElevatorScene.scene.getNumberOfFloors())
-//				{
-//					ElevatorScene.scene.setCurrentFloorForElevator(currFloor);
-//					
-//					peopleGoOutThisFloor = ElevatorScene.scene.getNumberOfPeopleGoOutThisFloor(currFloor);
-//					System.out.println("PEOPLE GOING OUT ON THIS FLOOR: " + peopleGoOutThisFloor);
-//					
-//					for(int j = 0; j < peopleGoOutThisFloor; j++)
-//					{
-//						System.out.println("Persona: " + (j + 1) + " fer ur lyftu a h�d " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));				
-//						ElevatorScene.scene.outSemaphore.get(currFloor).release();
-//			
-//						sleepNow();
-//					}
-//					System.out.println("Allir farnir ur lyftu!!!!");
-//				}
-//				else
-//				{
-//					break;
-//				}
-//				
-//				
-//			}
-//			for(int i = ElevatorScene.scene.getNumberOfFloors()-1; i > 0 ; i--)
-//			{
-//				ElevatorScene.scene.setCurrentFloorForElevator(i);
-//				System.out.println("Haed: " + i);
-//		
-//				
-//				numberOfPeople = ElevatorScene.scene.getNumberOfPeopleInElevator(1);
-//				for(int j = 0; j < 6/*(6 - numberOfPeople)*/; j++)
-//				{
-//					System.out.println("Persona ma fara inn");
-//					ElevatorScene.scene.inSemaphore.get(i).release();
-//					sleepNow();
-//				}
-//				
-//				currFloor = i - 1;
-//				//peopleGoingOut = ElevatorScene.scene.getNumberOfPeopleGoingOutAtFloor(currFloor);
-//				if(currFloor >= 0)
-//				{
-//					ElevatorScene.scene.setCurrentFloorForElevator(currFloor);
-//					System.out.println("FOLK I LYFTU: " + ElevatorScene.scene.getNumberOfPeopleInElevator(1));
-//					
-//					peopleGoOutThisFloor = ElevatorScene.scene.getNumberOfPeopleGoOutThisFloor(currFloor);
-//					
-//					System.out.println("PEOPLE GOING OUT ON THIS FLOOR: " + peopleGoOutThisFloor);
-//					
-//					for(int j = 0; j < peopleGoOutThisFloor; j++)
-//					{
-//						System.out.println("Floor: " + ElevatorScene.scene.getCurrentFloorForElevator(currFloor));
-//						System.out.println("Persona: " + j + " fer ur lyftu");				
-//						ElevatorScene.scene.outSemaphore.get(currFloor).release();
-//			
-//						sleepNow();
-//					}
-//					System.out.println("Allir farnir úr lyftu!!!!");
-//				}
-//				else
-//				{
-//					break;
-//				}
-//			
-//			if(ElevatorScene.scene.getNumberOfPeopleWaitingAtFloor(0) == 0)
-//			{
-//				System.out.println("KEYRSLA BUIN!!!!!");
-//				break;
-//				
-//			}
-//		  }
-//		}
-//	}
-	
+
+		private boolean checkIfToKillProgram() {
+		int killCounter = 0;
+		for(int i = 0; i < ElevatorScene.scene.getNumberOfFloors(); i++){
+			if(ElevatorScene.scene.getNumberOfPeopleWaitingAtFloor(i) == 0){
+				killCounter++;
+			}
+			if(killCounter == ElevatorScene.scene.getNumberOfFloors()){
+				return true;
+			}
+		}
+		return false;
+	}
+
 		private void sleepNow()
 		{
 			try {
