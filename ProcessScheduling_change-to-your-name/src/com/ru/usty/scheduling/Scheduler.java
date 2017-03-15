@@ -1,21 +1,33 @@
 package com.ru.usty.scheduling;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedList;
+import java.util.List;
+//import java.util.PriorityQueue;
 import java.util.Queue;
 
 import com.ru.usty.scheduling.process.ProcessExecution;
+//import com.ru.usty.scheduling.process.ProcessHandler;
+//import com.ru.usty.scheduling.process.ProcessInfo;
 
 public class Scheduler {
 
 	ProcessExecution processExecution;
 	Policy policy;
 	int quantum;
+	boolean isProcessinExec;
+	int cheat;
 
 	/**
 	 * Add any objects and variables here (if needed)
 	 */
 	Queue<ProcessData> processQueue;
-	long whatTimeisNow ;
+	List<ProcessData> processList;
+	long whatTimeisNow;
+	long currProcessTime;
+	int currProcessID;
 	/**
 	 * DO NOT CHANGE DEFINITION OF OPERATION
 	 */
@@ -34,7 +46,13 @@ public class Scheduler {
 		this.policy = policy;
 		this.quantum = quantum;
 		
+		isProcessinExec = false;
+		cheat = 1000;
+				
 		processQueue = new LinkedList<ProcessData>();
+		processList = new ArrayList<ProcessData>();
+		
+		//processes = new ArrayList<Integer>();
 		
 		
 
@@ -112,12 +130,12 @@ public class Scheduler {
 			{
 				System.out.println("isempty");
 				processExecution.switchToProcess(processID);
-				processQueue.add(new ProcessData(processID, 0));
+				processList.add(new ProcessData(processID, 0));
 			}
 			else
 			{
 				System.out.println("ekki empty");
-				processQueue.add(new ProcessData(processID, 0));
+				processList.add(new ProcessData(processID, 0));
 			}
 		}
 		else if(policy.equals(Policy.RR))
@@ -133,7 +151,47 @@ public class Scheduler {
 				processQueue.add(new ProcessData(processID, 0));
 			}
 		}
-
+		if(policy.equals(Policy.SPN))
+		{
+			if(isProcessinExec == false)
+			{
+				System.out.println("isempty");
+				//kveiki á fyrsta process, þegar hann klárar rönnar processFinished
+				processExecution.switchToProcess(processID);
+				isProcessinExec = true;
+			}
+			else
+			{
+				
+				System.out.println("ekki empty");
+				processList.add(new ProcessData(processID, processExecution.getProcessInfo(processID).totalServiceTime));
+			}
+		}
+		if(policy.equals(Policy.SRT))
+		{
+			if(isProcessinExec == false)
+			{
+				System.out.println("isempty");
+				//kveiki á fyrsta process, þegar hann klárar rönnar processFinished
+				processExecution.switchToProcess(processID);
+				currProcessTime = processExecution.getProcessInfo(processID).totalServiceTime;
+				currProcessID = processID;
+				isProcessinExec = true;
+			}
+			else if(processExecution.getProcessInfo(processID).totalServiceTime < currProcessTime)
+			{
+				processList.add(new ProcessData(currProcessID, currProcessTime));
+				processExecution.switchToProcess(processID);
+				currProcessTime = processExecution.getProcessInfo(processID).totalServiceTime;
+				currProcessID = processID;
+			}
+			else
+			{
+				
+				System.out.println("ekki empty");
+				processList.add(new ProcessData(processID, processExecution.getProcessInfo(processID).totalServiceTime));
+			}
+		}
 		
 		/**
 		 * Add scheduling code here
@@ -152,10 +210,8 @@ public class Scheduler {
 		• 10% - Shortest Remaining Time (SRT)
 		• 10% - Highest Response Ratio Next (HRRN)
 		• 20% - Feedback (FB)
-*/
-		/**
-		 * Add scheduling code here
 		 */
+
 		if(policy.equals(Policy.FCFS))
 		{
 			FCFR();
@@ -164,23 +220,66 @@ public class Scheduler {
 		{
 			RR(processID);
 		}
+		else if(policy.equals(Policy.SPN))
+		{
+			SPN(processID);
+		}
+		else if(policy.equals(Policy.SRT))
+		{
+			SRT(processID);
+		}
 		
 		System.out.println("KEYRSLU LOKIÐ!");
 
 
 	}
 	
+	/*
+	 * Round Robin
+	 * Með öðrum orðum time-slicing
+	 * Búum til nýtt interupt byggð á timer, þannig í hvert skipti sem dispatcherinn 
+	 * keyrir þá býr hann líka til timer sem bíður í einhvern ákveðinn tíma og interuptar og þá er distpatcher keyrður.
+	 * Dispatcher velur þann sem er fremstur á queueinni sambærilegt og í FCFS
+	 */
+	
 	private void RR(int processID) {
+		
 		processQueue.remove(processID);
 		if(!processQueue.isEmpty())
 		{
-			int bla = processQueue.remove().processID;
-			processExecution.switchToProcess(bla);
-			processQueue.add(new ProcessData(bla, 0));
+			Thread t = new Thread(){
+				public void run() {
+					while(true) {
+						try {
+							
+							if(!processQueue.isEmpty())
+							{
+								int currProcessor = processQueue.remove().processID;
+								processExecution.switchToProcess(currProcessor);	
+								processQueue.add(new ProcessData(currProcessor, 0));
+								Thread.sleep(quantum);
+							}
+
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						}
+					}
+				};
+			t.start();	
 		}
-		
 	}
 
+	/*
+	 * 	First-Come-First-Served (FCFS)
+	 * 	Einfaldlega nonpreemtive queue
+	 * 	Simplest scheduling policy
+	 * 	FCFS = FIFO
+	 * 	Performs much better for long process than short ones
+	 * 	Tends to favor processor-bound processes over I/O-bound processes
+	 */
+	
 	public void FCFR()
 	{	
 		processQueue.remove();
@@ -188,6 +287,51 @@ public class Scheduler {
 		{
 			processExecution.switchToProcess(processQueue.peek().processID);
 		}
+	}
+	
+	private void SPN(int processID) {
+		if(!processList.isEmpty())
+		{
+			long somet = 100000;
+			int id = 0;
+			for(int i = 0; i < processList.size(); i++)
+			{
+				if(processList.get(i).someTime < somet)
+				{
+					somet = processList.get(i).someTime;
+					id = i;
+				}
+			}
+			processExecution.switchToProcess(processList.get(id).processID);
+			System.out.println("efst á queue " + id);
+			processList.remove(id);
+		}
+		else
+			isProcessinExec = false;
+		
+	}
+	private void SRT(int processID) {
+		if(!processList.isEmpty())
+		{
+			long somet = 100000;
+			int id = 0;
+			for(int i = 0; i < processList.size(); i++)
+			{
+				if(processList.get(i).someTime < somet)
+				{
+					somet = processList.get(i).someTime;
+					id = i;
+				}
+			}
+			processExecution.switchToProcess(processList.get(id).processID);
+			currProcessTime = processList.get(id).someTime;
+			currProcessID = processList.get(id).processID;
+		
+			processList.remove(id);
+		}
+		else
+			isProcessinExec = false;
+		
 	}
 	
 }
