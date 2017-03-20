@@ -63,42 +63,36 @@ public class Scheduler {
 		switch(policy) {
 		case FCFS:	//First-come-first-served
 			System.out.println("Starting new scheduling task: First-come-first-served");
-			policy = Policy.FCFS;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
 		case RR:	//Round robin
 			System.out.println("Starting new scheduling task: Round robin, quantum = " + quantum);
-			policy = Policy.RR;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
 		case SPN:	//Shortest process next
 			System.out.println("Starting new scheduling task: Shortest process next");
-			policy = Policy.SPN;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
 		case SRT:	//Shortest remaining time
 			System.out.println("Starting new scheduling task: Shortest remaining time");
-			policy = Policy.SRT;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
 		case HRRN:	//Highest response ratio next
 			System.out.println("Starting new scheduling task: Highest response ratio next");
-			policy = Policy.HRRN;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
 			break;
 		case FB:	//Feedback
 			System.out.println("Starting new scheduling task: Feedback, quantum = " + quantum);
-			policy = Policy.FB;
 			/**
 			 * Add your policy specific initialization code here (if needed)
 			 */
@@ -128,19 +122,16 @@ public class Scheduler {
 		{
 			if(processQueue.isEmpty())
 			{
-				System.out.println("isempty");
 				processExecution.switchToProcess(processID);
 				processList.add(new ProcessData(processID, 0));
 			}
 			else
 			{
-				System.out.println("ekki empty");
 				processList.add(new ProcessData(processID, 0));
 			}
 		}
 		else if(policy.equals(Policy.RR))
 		{
-			
 			if(processQueue.isEmpty())
 			{
 				processExecution.switchToProcess(processID);
@@ -148,6 +139,7 @@ public class Scheduler {
 			}
 			else
 			{
+				System.out.println("ekki empty");
 				processQueue.add(new ProcessData(processID, 0));
 			}
 		}
@@ -162,7 +154,6 @@ public class Scheduler {
 			}
 			else
 			{
-				
 				System.out.println("ekki empty");
 				processList.add(new ProcessData(processID, processExecution.getProcessInfo(processID).totalServiceTime));
 			}
@@ -244,30 +235,30 @@ public class Scheduler {
 	
 	private void RR(int processID) {
 		
-		processQueue.remove(processID);
 		if(!processQueue.isEmpty())
 		{
-			Thread t = new Thread(){
+			processQueue.remove(processID);
+			Thread thread = new Thread(){
 				public void run() {
 					while(true) {
 						try {
-							
 							if(!processQueue.isEmpty())
 							{
 								int currProcessor = processQueue.remove().processID;
 								processExecution.switchToProcess(currProcessor);	
-								processQueue.add(new ProcessData(currProcessor, 0));
-								Thread.sleep(quantum);
+								processQueue.add(new ProcessData(currProcessor, 0));								
 							}
-
+							Thread.sleep(quantum);
 							} catch (InterruptedException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
+						
 						}
+					
 					}
 				};
-			t.start();	
+				thread.start();	
 		}
 	}
 
